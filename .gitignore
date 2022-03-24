@@ -1,0 +1,6 @@
+tmp
+venv
+venv2
+__pycache__/
+.idea/
+data/
