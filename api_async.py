@@ -25,10 +25,6 @@ def input_queue_listener(input_queue: Queue, output_queue: Queue):
         preds = gpu.process(batch)
         output_queue.put((key, preds))
 
-class Item(BaseModel):
-    data: List
-    id: int
-
 results = {}
 
 async def read_predict(id):

@@ -1,3 +1,4 @@
+import random
 from pathlib import Path
 import aiohttp
 import asyncio
@@ -8,10 +9,15 @@ import more_itertools
 images_path = Path("/home/ivan/projects/ICU/auto_train/dog/")
 images = 1600
 # for torchserve use BATCH_SIZE=1
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 
-async def make_request(session, batch):
-    async with session.post('http://127.0.0.1:8080/predictions/resnet-18',
+def gen_port():
+    while True:
+        yield from [8080, 8081, 8082, 8083, 8084]
+port = gen_port()
+
+async def make_request(session, batch, port = 8080):
+    async with session.post(f'http://127.0.0.1:{port}/predictions/resnet-18',
                             data=[("data", open(str(path), "rb")) for path in batch]) as resp:
         return await resp.text()
 
@@ -21,7 +27,7 @@ async def main():
         paths_batches = more_itertools.grouper(paths, BATCH_SIZE)
         tasks = []
         for batch in paths_batches:
-            tasks.append(asyncio.ensure_future(make_request(session, batch)))
+            tasks.append(asyncio.ensure_future(make_request(session, batch, next(port))))
         predicts = await asyncio.gather(*tasks)
         for predict in predicts:
             print(predict)
