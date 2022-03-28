@@ -9,7 +9,6 @@ import numpy as np
 selector = selectors.DefaultSelector()
 
 cpu = Cpu()
-gpu = Gpu()
 manager = Manager()
 ports = [8080, 8081, 8082, 8083, 8084]
 
@@ -25,6 +24,8 @@ def recvall(sock):
 localhost = "127.0.0.1"
 
 def gpu_listener():
+    gpu = Gpu()
+
     def accept_connection(server_socket):
         client_socket, addr = server_socket.accept()
         selector.register(fileobj=client_socket, events=selectors.EVENT_READ, data=gpu_process)
@@ -41,7 +42,6 @@ def gpu_listener():
     server_socket.bind((localhost, 5000))
     server_socket.listen()
     selector.register(fileobj=server_socket, events=selectors.EVENT_READ, data=accept_connection)
-    gpu = Gpu()
     while True:
         events = selector.select()
         for key, _ in events:
@@ -59,21 +59,17 @@ def get_app():
 
     @app.post("/predictions/resnet-18")
     async def predict(data: list[bytes] = File(...)):
-        id = hash(data[0])
         res = cpu.pre_process(data)
-
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((localhost, 5000))
-        print(res.shape)
-        print(len(res.tobytes()))
         s.sendall(res.tobytes())
         s.shutdown(socket.SHUT_WR)
         data = recvall(s)
         data = np.frombuffer(data, dtype="float32")
         data = data.reshape(-1, 1000)
+        # как вариант не закрывать соединение никогда.
         s.close()
         return cpu.post_process(data)
-
     return app
 
 

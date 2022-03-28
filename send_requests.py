@@ -13,8 +13,8 @@ BATCH_SIZE = 4
 
 def gen_port():
     while True:
-        # yield from [8080, 8081, 8082, 8083, 8084]
-        yield from [8080]
+        yield from [8080, 8081, 8082, 8083, 8084]
+        # yield from [8080]
 
 port = gen_port()
 
