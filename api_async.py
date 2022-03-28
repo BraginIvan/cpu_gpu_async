@@ -1,11 +1,15 @@
 import random
 from concurrent.futures.process import ProcessPoolExecutor
-from fastapi import FastAPI, File
+from fastapi import FastAPI, File, Request
 from inference import Cpu, Gpu
 from multiprocessing import Queue, Manager
 import asyncio
 from pydantic import BaseModel
 from typing import List
+from multipart.multipart import parse_options_header
+import cgi
+import tempfile
+import json
 
 cpu = Cpu()
 
@@ -42,13 +46,13 @@ async def read_predict(id):
             pass
     return -1
 
+
 @app.post("/predictions/resnet-18")
 async def predict(data: list[bytes] = File(...)):
     id = random.randint(0, 1000000)
     loop = asyncio.get_event_loop()
     loop.run_in_executor(app.state.executor, cpu_processing, data, gpu_queue, id)
     res = await read_predict(id)
-    print(res)
     return cpu.post_process(res)
 
 

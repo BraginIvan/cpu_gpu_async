@@ -3,14 +3,13 @@ import uvicorn
 from inference import Cpu, Gpu
 from multiprocessing import Process, Manager, Queue
 import asyncio
-import random
 
 cpu = Cpu()
 gpu = Gpu()
 manager = Manager()
 gpu_queue = manager.Queue()
-
-out_queues = {port: manager.Queue() for port in [8080, 8081, 8082, 8083, 8084]}
+ports = [8080, 8081, 8082, 8083, 8084]
+out_queues = {port: manager.Queue() for port in ports}
 
 def input_queue_listener(input_queue: Queue, output_queues: dict[Queue]):
     gpu = Gpu()
@@ -60,7 +59,7 @@ def get_app(gpu_queue: Queue, out_queue: Queue, port: int):
     return app
 
 if __name__ == "__main__":
-    for port in [8080, 8081, 8082, 8083, 8084]:
+    for port in ports:
         p = Process(target=start_rest, args=(port,))
         p.start()
     input_queue_listener(gpu_queue, out_queues)

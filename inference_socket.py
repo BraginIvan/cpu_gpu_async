@@ -5,9 +5,11 @@ import io
 import torch
 import json
 import torch.nn.functional as F
+import numpy as np
 
 torch.set_num_threads(1)
 
+IMAGE_SIZE = 224
 
 class ImageClassifier(ResNet):
     def __init__(self):
@@ -19,7 +21,7 @@ class Cpu:
         self.topk = 1
         self.image_processing = transforms.Compose([
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.CenterCrop(IMAGE_SIZE),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -36,10 +38,12 @@ class Cpu:
             image = Image.open(io.BytesIO(image))
             image = self.image_processing(image)
             images.append(image)
-        return torch.stack(images)
+        result = np.stack(images)
+        print(result.dtype)
+        return result
 
     def post_process(self, data):
-        ps = F.softmax(data, dim=1)
+        ps = F.softmax(torch.tensor(data), dim=1)
         probs, classes = torch.topk(ps, self.topk, dim=1)
         probs = probs.tolist()
         classes = classes.tolist()
@@ -55,7 +59,13 @@ class Gpu:
         self.model.eval()
 
     def process(self, batch):
+        print("batch", len(batch))
+        batch = np.frombuffer(batch, dtype="float32")
+        print("batch np", len(batch))
+        batch = batch.reshape(-1, 3, IMAGE_SIZE, IMAGE_SIZE)
+        batch = torch.tensor(batch)
         print("gpu_batches", self.gpu_batches_processed)
         self.gpu_batches_processed += 1
-        result = self.model(batch.to("cuda")).cpu().detach()
-        return result
+        result = self.model(batch.to("cuda")).cpu().detach().numpy()
+        print("processed", self.gpu_batches_processed)
+        return result.tobytes()
