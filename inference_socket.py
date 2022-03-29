@@ -1,4 +1,4 @@
-from torchvision.models.resnet import ResNet, BasicBlock
+from torchvision.models.resnet import ResNet, BasicBlock, Bottleneck
 from torchvision import transforms
 from PIL import Image
 import io
@@ -11,9 +11,16 @@ torch.set_num_threads(1)
 
 IMAGE_SIZE = 224
 
-class ImageClassifier(ResNet):
+class Resnet152(ResNet):
     def __init__(self):
-        super(ImageClassifier, self).__init__(BasicBlock, [2, 2, 2, 2])
+        super(Resnet152, self).__init__(Bottleneck, [3, 8, 36, 3])
+        self.file_path = "data/resnet152.pth"
+
+
+class Resnet18(ResNet):
+    def __init__(self):
+        super(Resnet18, self).__init__(BasicBlock, [2, 2, 2, 2])
+        self.file_path = "data/resnet18.pth"
 
 
 class Cpu:
@@ -53,8 +60,8 @@ class Cpu:
 class Gpu:
     def __init__(self):
         self.gpu_batches_processed = 0
-        self.model = ImageClassifier()
-        self.model.load_state_dict(torch.load("data/resnet18.pth"))
+        self.model = Resnet152()
+        self.model.load_state_dict(torch.load(self.model.file_path))
         self.model.to("cuda")
         self.model.eval()
 
