@@ -1,17 +1,12 @@
-from torchvision.models.resnet import ResNet, BasicBlock
 from torchvision import transforms
 from PIL import Image
 import io
 import torch
 import json
 import torch.nn.functional as F
-
+from architectures.model import ImageClassifier
 torch.set_num_threads(1)
 
-
-class ImageClassifier(ResNet):
-    def __init__(self):
-        super(ImageClassifier, self).__init__(BasicBlock, [2, 2, 2, 2])
 
 
 class Cpu:
@@ -25,12 +20,11 @@ class Cpu:
                                  std=[0.229, 0.224, 0.225])
         ])
         self.cpu_batches_processed = 0
-        with open('data/index_to_name.json') as json_file:
+        with open('../data/index_to_name.json') as json_file:
             self.mapping = json.load(json_file)
 
     def pre_process(self, batch):
         self.cpu_batches_processed += 1
-        print("start cpu", self.cpu_batches_processed)
         images = []
         for image in batch:
             image = Image.open(io.BytesIO(image))
@@ -50,12 +44,13 @@ class Gpu:
     def __init__(self):
         self.gpu_batches_processed = 0
         self.model = ImageClassifier()
-        self.model.load_state_dict(torch.load("data/resnet18.pth"))
+        m = torch.load("data/resnet18.pth")
+        self.model.load_state_dict(m)
         self.model.to("cuda")
         self.model.eval()
 
     def process(self, batch):
-        print("gpu_batches", self.gpu_batches_processed)
+        print("gpu")
         self.gpu_batches_processed += 1
         result = self.model(batch.to("cuda")).cpu().detach()
         return result

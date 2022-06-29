@@ -8,8 +8,10 @@ gpu = Gpu()
 
 @app.post("/predictions/resnet-18")
 async def predict(data: list[bytes] = File(...)):
-    res = gpu.process(cpu.pre_process(data))
-    return cpu.post_process(res)
+    preprocessed = cpu.pre_process(data)
+    predicted = gpu.process(preprocessed)
+    postprocessed = cpu.post_process(predicted)
+    return postprocessed
 
 
 if __name__ == "__main__":

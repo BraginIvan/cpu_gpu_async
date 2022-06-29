@@ -1,26 +1,19 @@
 import random
 from concurrent.futures.process import ProcessPoolExecutor
-from fastapi import FastAPI, File, Request
-from inference import Cpu, Gpu
+from fastapi import FastAPI, File
+from inference.inference import Cpu, Gpu
 from multiprocessing import Queue, Manager
 import asyncio
-from pydantic import BaseModel
-from typing import List
-from multipart.multipart import parse_options_header
-import cgi
-import tempfile
-import json
-
-cpu = Cpu()
-
-def cpu_processing(batch, gpu_queue:Queue, req_id):
-    result = cpu.pre_process(batch)
-    gpu_queue.put((req_id, result))
 
 app = FastAPI()
 manager = Manager()
 gpu_queue = manager.Queue()
 prediction_queue = manager.Queue()
+
+cpu = Cpu()
+def cpu_processing(batch, gpu_queue:Queue, req_id: int):
+    result = cpu.pre_process(batch)
+    gpu_queue.put((req_id, result))
 
 def input_queue_listener(input_queue: Queue, output_queue: Queue):
     gpu = Gpu()
@@ -30,10 +23,9 @@ def input_queue_listener(input_queue: Queue, output_queue: Queue):
         output_queue.put((key, preds))
 
 results = {}
-
 async def read_predict(id):
-    for _ in range(100):
-        await asyncio.sleep(1/10)
+    for approach in range(100):
+        await asyncio.sleep(1 / 10)
         if id in results:
             return results.pop(id)
         try:
@@ -41,11 +33,9 @@ async def read_predict(id):
             if key == id:
                 return value
             else:
-                results[key]=value
+                results[key] = value
         except:
             pass
-    return -1
-
 
 @app.post("/predictions/resnet-18")
 async def predict(data: list[bytes] = File(...)):
@@ -55,21 +45,19 @@ async def predict(data: list[bytes] = File(...)):
     res = await read_predict(id)
     return cpu.post_process(res)
 
-
 @app.on_event("startup")
 async def startup_event():
-    app.state.executor = ProcessPoolExecutor(max_workers=3)
     loop = asyncio.new_event_loop()
-    loop.run_in_executor(ProcessPoolExecutor(max_workers=1), input_queue_listener, gpu_queue, prediction_queue)
-
+    gpu_process = ProcessPoolExecutor(max_workers=1)
+    loop.run_in_executor(gpu_process, input_queue_listener, gpu_queue, prediction_queue)
+    app.state.executor = ProcessPoolExecutor(max_workers=3)
 
 @app.on_event("shutdown")
 async def on_shutdown():
     app.state.executor.shutdown()
 
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8080)
-    pass
+
 

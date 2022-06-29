@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File
 import uvicorn
-from inference_socket import Cpu, Gpu
+from inference.inference_socket import Cpu, Gpu
 from multiprocessing import Process, Manager
 import socket
 import selectors
@@ -19,7 +19,6 @@ def recvall(sock):
         if not packet:
             return data
         data.extend(packet)
-
 
 localhost = "127.0.0.1"
 
@@ -67,9 +66,9 @@ def get_app():
         data = recvall(s)
         data = np.frombuffer(data, dtype="float32")
         data = data.reshape(-1, 1000)
-        # как вариант не закрывать соединение никогда.
         s.close()
         return cpu.post_process(data)
+
     return app
 
 
