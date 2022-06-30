@@ -115,7 +115,7 @@ python send_requests.py --ports 3 --batch-size 80 --imgs-path /home/ivan/tmp --i
 ### Resnet-152
 В одном окне запускаем 
 ```
-python api_ports.py --model resnet152
+python api_ports.py --model resnet152 --ports 3 
 ```
 В другом 
 ```
