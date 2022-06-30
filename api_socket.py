@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File
 import uvicorn
-from inference.inference_socket import Cpu, Gpu
+from utils.inference_socket import Cpu, Gpu
 from multiprocessing import Process, Manager
 import socket
 import selectors

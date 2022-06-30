@@ -4,9 +4,10 @@ import io
 import torch
 import json
 import torch.nn.functional as F
-from architectures.model import ImageClassifier
-torch.set_num_threads(1)
+from utils.resnet18 import Resnet18
+from utils.resnet152 import Resnet152
 
+torch.set_num_threads(1)
 
 
 class Cpu:
@@ -20,7 +21,7 @@ class Cpu:
                                  std=[0.229, 0.224, 0.225])
         ])
         self.cpu_batches_processed = 0
-        with open('../data/index_to_name.json') as json_file:
+        with open('./data/index_to_name.json') as json_file:
             self.mapping = json.load(json_file)
 
     def pre_process(self, batch):
@@ -41,10 +42,13 @@ class Cpu:
 
 
 class Gpu:
-    def __init__(self):
+    def __init__(self, model_name):
         self.gpu_batches_processed = 0
-        self.model = ImageClassifier()
-        m = torch.load("data/resnet18.pth")
+        if model_name == "resnet18":
+            self.model = Resnet18()
+        elif model_name == "resnet152":
+            self.model = Resnet152()
+        m = torch.load(self.model.file_path)
         self.model.load_state_dict(m)
         self.model.to("cuda")
         self.model.eval()

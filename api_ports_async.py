@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File
 import uvicorn
-from inference.inference import Cpu, Gpu
+from utils.inference import Cpu, Gpu
 from multiprocessing import Process, Manager, Queue
 import asyncio
 import random

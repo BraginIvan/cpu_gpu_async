@@ -1,12 +1,12 @@
 from fastapi import FastAPI, File
 import uvicorn
-from inference import Cpu, Gpu
+from utils.inference import Cpu, Gpu
+from utils.serving_args import get_args
 
 app = FastAPI()
-cpu = Cpu()
-gpu = Gpu()
 
-@app.post("/predictions/resnet-18")
+
+@app.post("/predictions/resnet")
 async def predict(data: list[bytes] = File(...)):
     preprocessed = cpu.pre_process(data)
     predicted = gpu.process(preprocessed)
@@ -15,4 +15,7 @@ async def predict(data: list[bytes] = File(...)):
 
 
 if __name__ == "__main__":
+    args = get_args()
+    cpu = Cpu()
+    gpu = Gpu(args.model)
     uvicorn.run(app, host="127.0.0.1", port=8080)

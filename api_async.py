@@ -1,22 +1,19 @@
 import random
 from concurrent.futures.process import ProcessPoolExecutor
 from fastapi import FastAPI, File
-from inference.inference import Cpu, Gpu
+from utils.inference import Cpu, Gpu
 from multiprocessing import Queue, Manager
 import asyncio
+from utils.serving_args import get_args
 
 app = FastAPI()
-manager = Manager()
-gpu_queue = manager.Queue()
-prediction_queue = manager.Queue()
 
-cpu = Cpu()
 def cpu_processing(batch, gpu_queue:Queue, req_id: int):
     result = cpu.pre_process(batch)
     gpu_queue.put((req_id, result))
 
 def input_queue_listener(input_queue: Queue, output_queue: Queue):
-    gpu = Gpu()
+    gpu = Gpu(args.model)
     while True:
         key, batch = input_queue.get()
         preds = gpu.process(batch)
@@ -37,7 +34,7 @@ async def read_predict(id):
         except:
             pass
 
-@app.post("/predictions/resnet-18")
+@app.post("/predictions/resnet")
 async def predict(data: list[bytes] = File(...)):
     id = random.randint(0, 1000000)
     loop = asyncio.get_event_loop()
@@ -57,6 +54,15 @@ async def on_shutdown():
     app.state.executor.shutdown()
 
 if __name__ == "__main__":
+    args = get_args()
+
+
+    manager = Manager()
+    gpu_queue = manager.Queue()
+    prediction_queue = manager.Queue()
+
+    cpu = Cpu()
+
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8080)
 
