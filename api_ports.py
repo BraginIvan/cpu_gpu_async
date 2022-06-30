@@ -7,7 +7,7 @@ from utils.serving_args import get_args
 
 
 
-def input_queue_listener(input_queue: Queue, output_queues: dict[Queue], model: str):
+def gpu_processing(input_queue: Queue, output_queues: dict[Queue], model: str):
     gpu = Gpu(model)
     while True:
         key, port, batch = input_queue.get()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     for port in ports:
         p = Process(target=start_rest, args=(port,))
         p.start()
-    input_queue_listener(gpu_queue, out_queues, args.model)
+    gpu_processing(gpu_queue, out_queues, args.model)
 
 
 

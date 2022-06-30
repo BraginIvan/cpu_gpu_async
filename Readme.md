@@ -39,7 +39,7 @@ mv resnet-152.mar model_store
 torchserve --stop
 torchserve --start --model-store model_store
 curl -X DELETE http://localhost:8081/models/resnet/1.0
-curl -X POST "localhost:8081/models?model_name=resnet&url=resnet-152.mar&batch_size=24&max_batch_delay=50&initial_workers=3&synchronous=true"
+curl -X POST "localhost:8081/models?model_name=resnet&url=resnet-152.mar&batch_size=16&max_batch_delay=50&initial_workers=3&synchronous=true"
 ```
 В другом 
 ```
@@ -105,7 +105,7 @@ python send_requests.py --ports 1 --batch-size 24 --imgs-path /home/ivan/tmp --i
 ### Resnet-18
 В одном окне запускаем 
 ```
-python api_ports_sync.py --model resnet18 --ports 3 
+python api_ports.py --model resnet18 --ports 3 
 ```
 В другом 
 ```
