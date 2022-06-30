@@ -1,3 +1,10 @@
+# Настройка окружения
+
+- Создать conda env с python 3.9
+- conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+- pip install -r requirements.txt
+
+
 # Подготовка данных
 ### Скачать веса моделей
 Скачать https://download.pytorch.org/models/resnet18-f37072fd.pth и положить в data/resnet18.pth
@@ -18,7 +25,7 @@ mv resnet-18.mar model_store
 torchserve --stop
 torchserve --start --model-store model_store
 curl -X DELETE http://localhost:8081/models/resnet/1.0
-curl -X POST "localhost:8081/models?model_name=resnet&url=resnet-18.mar&batch_size=80&max_batch_delay=50&initial_workers=3&synchronous=true"
+curl -X POST "localhost:8081/models?model_name=resnet&url=resnet-18.mar&batch_size=32&max_batch_delay=50&initial_workers=3&synchronous=true"
 ```
 В другом 
 ```
@@ -45,13 +52,94 @@ python send_requests.py --ports 1 --batch-size 1 --imgs-path /home/ivan/tmp --im
 curl -X DELETE http://localhost:8081/models/resnet/1.0
 ```
 
+Для освобождения портов 
+```
+torchserve --stop
+```
+
+
 # Запуск теста Синхронно в 1 процессе.
 ### Resnet-18
 В одном окне запускаем 
 ```
-python api_ports_sync.py --model resnet18
+python api_sync.py --model resnet18
+```
+В другом 
+```
+python send_requests.py --ports 1 --batch-size 80 --imgs-path /home/ivan/tmp --images-n 1600
+```
+### Resnet-152
+В одном окне запускаем 
+```
+python api_sync.py --model resnet152
+```
+В другом 
+```
+python send_requests.py --ports 1 --batch-size 24 --imgs-path /home/ivan/tmp --images-n 1608
+```
+
+
+# Запуск теста Асинхронно. Несколько CPU воркеров
+У меня не запустился этот тест на новом venv, зависает на model.to('cuda'), раньше всё работало.
+### Resnet-18
+В одном окне запускаем 
+```
+python api_async.py --model resnet18 
+```
+В другом 
+```
+python send_requests.py --ports 1 --batch-size 80 --imgs-path /home/ivan/tmp --images-n 1600
+```
+### Resnet-152
+В одном окне запускаем 
+```
+python api_async.py --model resnet152
+```
+В другом 
+```
+python send_requests.py --ports 1 --batch-size 24 --imgs-path /home/ivan/tmp --images-n 1608
+```
+
+
+# Запуск теста Асинхронно. REST API на каждом воркере
+### Resnet-18
+В одном окне запускаем 
+```
+python api_ports_sync.py --model resnet18 --ports 3 
 ```
 В другом 
 ```
 python send_requests.py --ports 3 --batch-size 80 --imgs-path /home/ivan/tmp --images-n 1600
+```
+
+### Resnet-152
+В одном окне запускаем 
+```
+python api_ports_sync.py --model resnet152
+```
+В другом 
+```
+python send_requests.py --ports 3 --batch-size 24 --imgs-path /home/ivan/tmp --images-n 1608
+```
+
+
+
+# Запуск теста Сокеты вместо очередей
+### Resnet-18
+В одном окне запускаем 
+```
+python api_socket.py --model resnet18 --ports 3 
+```
+В другом 
+```
+python send_requests.py --ports 3 --batch-size 80 --imgs-path /home/ivan/tmp --images-n 1600
+```
+### Resnet-152
+В одном окне запускаем 
+```
+python api_socket.py --model resnet152 --ports 3 
+```
+В другом 
+```
+python send_requests.py --ports 3 --batch-size 24 --imgs-path /home/ivan/tmp --images-n 1608
 ```

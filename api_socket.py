@@ -5,12 +5,12 @@ from multiprocessing import Process, Manager
 import socket
 import selectors
 import numpy as np
+from utils.serving_args import get_args
 
 selector = selectors.DefaultSelector()
 
 cpu = Cpu()
 manager = Manager()
-ports = [8080, 8081, 8082, 8083, 8084]
 
 def recvall(sock):
     data = bytearray()
@@ -23,7 +23,7 @@ def recvall(sock):
 localhost = "127.0.0.1"
 
 def gpu_listener():
-    gpu = Gpu()
+    gpu = Gpu(args.model)
 
     def accept_connection(server_socket):
         client_socket, addr = server_socket.accept()
@@ -56,7 +56,7 @@ def start_rest(port: int):
 def get_app():
     app = FastAPI()
 
-    @app.post("/predictions/resnet-18")
+    @app.post("/predictions/resnet")
     async def predict(data: list[bytes] = File(...)):
         res = cpu.pre_process(data)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -73,6 +73,8 @@ def get_app():
 
 
 if __name__ == "__main__":
+    args = get_args()
+    ports = list(range(8080, 8080 + args.ports))
     for port in ports:
         p = Process(target=start_rest, args=(port,))
         p.start()

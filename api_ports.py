@@ -36,7 +36,7 @@ if __name__ == "__main__":
     cpu = Cpu()
     manager = Manager()
     gpu_queue = manager.Queue()
-    ports = [8080, 8081, 8082]
+    ports = list(range(8080, 8080 + args.ports))
     out_queues = {port: manager.Queue() for port in ports}
 
     for port in ports:

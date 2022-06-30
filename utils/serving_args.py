@@ -6,4 +6,9 @@ def get_args():
                         type=str,
                         help='model_name resnet18 or resnet152')
 
+    parser.add_argument('--ports',
+                        default=1,
+                        type=int,
+                        help='number of ports to use')
+
     return parser.parse_args()

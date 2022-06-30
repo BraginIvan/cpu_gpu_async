@@ -6,16 +6,12 @@ import torch
 import json
 import torch.nn.functional as F
 import numpy as np
+from utils.resnet18 import Resnet18
+from utils.resnet152 import Resnet152
 
 torch.set_num_threads(1)
 
 IMAGE_SIZE = 224
-
-
-class Resnet18(ResNet):
-    def __init__(self):
-        super(Resnet18, self).__init__(BasicBlock, [2, 2, 2, 2])
-        self.file_path = "../data/resnet18.pth"
 
 
 class Cpu:
@@ -29,7 +25,7 @@ class Cpu:
                                  std=[0.229, 0.224, 0.225])
         ])
         self.cpu_batches_processed = 0
-        with open('../data/index_to_name.json') as json_file:
+        with open('./data/index_to_name.json') as json_file:
             self.mapping = json.load(json_file)
 
     def pre_process(self, batch):
@@ -51,9 +47,12 @@ class Cpu:
 
 
 class Gpu:
-    def __init__(self):
+    def __init__(self, model_name):
         self.gpu_batches_processed = 0
-        self.model = Resnet18()
+        if model_name == "resnet18":
+            self.model = Resnet18()
+        elif model_name == "resnet152":
+            self.model = Resnet152()
         self.model.load_state_dict(torch.load(self.model.file_path))
         self.model.to("cuda")
         self.model.eval()
