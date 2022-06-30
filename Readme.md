@@ -1,11 +1,11 @@
-##Подготовка данных
+## Подготовка данных
 ### Скачать веса моделей
 Скачать https://download.pytorch.org/models/resnet18-f37072fd.pth и положить в data/resnet18.pth
 Скачать https://download.pytorch.org/models/resnet152-394f9c45.pth и положить в data/resnet152.pth
 ### Создать дирректорию с картинками
 Достаточно скачать 5-6 разных картинок и положить в новую директорию. 
 
-##Запуск torchserve тестов
+## Запуск torchserve тестов
 Создать директорию для моделей
 ```
 mkdir model_store
